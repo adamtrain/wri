@@ -1,0 +1,64 @@
+[project]
+name = "wri"
+version = "0.1.0"
+description = "A calm TUI for outlining and writing nonfiction books as folders of Markdown files."
+readme = "README.md"
+authors = [
+    { name = "Adam Train", email = "adam@adametrain.com" }
+]
+requires-python = ">=3.12"
+license = "CC0-1.0"
+license-files = ["LICENSE"]
+keywords = ["writing", "books", "markdown", "outline", "tui", "textual"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: End Users/Desktop",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Text Editors :: Text Processing",
+    "Topic :: Text Processing :: Markup :: Markdown",
+]
+dependencies = [
+    "textual>=8.2.8",
+]
+
+[project.urls]
+Homepage = "https://github.com/adamtrain/wri"
+Repository = "https://github.com/adamtrain/wri"
+Issues = "https://github.com/adamtrain/wri/issues"
+
+[project.scripts]
+wri = "wri.cli:main"
+
+[build-system]
+requires = ["uv_build>=0.12.15,<0.13.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+    "ruff>=0.16.8",
+    "ty>=0.0.83",
+]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "C4", "RUF", "PTH", "RET", "PIE"]
+# Textual's BINDINGS and friends are class-level lists by design.
+ignore = ["RUF012"]
+
+[tool.ruff.lint.isort]
+known-local-folder = ["conftest"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
