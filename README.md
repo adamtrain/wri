@@ -6,6 +6,7 @@
 
 Sections are folders, chapters are Markdown files, and your own editor does the writing.
 
+[![CI](https://github.com/adamtrain/wri/actions/workflows/ci.yml/badge.svg)](https://github.com/adamtrain/wri/actions/workflows/ci.yml)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-3776AB?logo=python&logoColor=white)](https://www.python.org)
 [![License: CC0-1.0](https://img.shields.io/badge/license-CC0--1.0-lightgrey)](LICENSE)
 [![Built with Textual](https://img.shields.io/badge/built%20with-Textual-5a4fcf)](https://textual.textualize.io)

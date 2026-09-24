@@ -2,6 +2,8 @@
 
 import contextlib
 import json
+import time
+from collections.abc import Callable
 from pathlib import Path
 
 import pytest
@@ -9,7 +11,7 @@ from textual.pilot import Pilot
 from textual.widget import Widget
 from textual.widgets import Input, Static
 
-from wri.app import PREVIEW_DELAY, BookScreen, WriApp
+from wri.app import BookScreen, WriApp
 from wri.book import CONFIG_FILE, TRASH_DIR, Book
 from wri.dialogs import Confirm, HelpScreen, SectionPicker, TextPrompt
 
@@ -61,9 +63,12 @@ async def answer(pilot: Pilot, text: str) -> None:
     await pilot.pause()
 
 
-async def settle(pilot: Pilot) -> None:
-    """Wait for the preview to catch up with the highlight."""
-    await pilot.pause(PREVIEW_DELAY * 3)
+async def eventually(pilot: Pilot, check: Callable[[], bool], timeout: float = 5) -> None:
+    """Wait until ``check()`` is true, e.g. for the preview to catch up after its short delay."""
+    deadline = time.monotonic() + timeout
+    while not check():
+        assert time.monotonic() < deadline, "the screen didn't catch up in time"
+        await pilot.pause(0.05)
 
 
 def shown_title(widget: Widget) -> str:
@@ -78,14 +83,13 @@ def text_of(pilot: Pilot, selector: str) -> str:
 
 async def test_shows_the_book(book: Book) -> None:
     async with WriApp(book.root).run_test(size=SIZE) as pilot:
-        await settle(pilot)
         view = screen(pilot)
+        await eventually(pilot, lambda: view.preview.source == "One two three.")
         assert view.sections_list.option_count == 3
         assert view.section_index == 0
         assert view.chapter is not None and view.chapter.title == "First"
         assert text_of(pilot, "#book-words") == "6 words"
         assert "3 sections · 3 chapters" in text_of(pilot, "#book-counts")
-        assert view.preview.source == "One two three."
         await pilot.press("down")
         await pilot.pause()
         assert view.chapter is not None and view.chapter.title == "Third"
@@ -94,9 +98,9 @@ async def test_shows_the_book(book: Book) -> None:
 async def test_welcomes_an_empty_book(tmp_path: Path) -> None:
     book = Book.create(tmp_path / "empty")
     async with WriApp(book.root).run_test(size=SIZE) as pilot:
-        await settle(pilot)
-        assert screen(pilot).section is None
-        assert "Welcome to wri" in screen(pilot).preview.source
+        view = screen(pilot)
+        await eventually(pilot, lambda: "Welcome to wri" in view.preview.source)
+        assert view.section is None
 
 
 async def test_add_a_section_after_the_current_one(book: Book) -> None:
@@ -187,11 +191,11 @@ async def test_new_chapter_opens_the_editor(book: Book, editor: list[Path]) -> N
 async def test_edit_a_chapter(book: Book, editor: list[Path]) -> None:
     async with WriApp(book.root).run_test(size=SIZE) as pilot:
         await pilot.press("enter", "down", "enter")
-        await settle(pilot)
+        view = screen(pilot)
+        await eventually(pilot, lambda: "Words written in the editor." in view.preview.source)
         chapter = book.root / "01 Beginning" / "02 Second.md"
         assert editor == [chapter]
         assert chapter.read_text() == "Four five.\nWords written in the editor.\n"
-        assert "Words written in the editor." in screen(pilot).preview.source
         assert text_of(pilot, "#book-words") == "11 words"
 
 
@@ -292,23 +296,20 @@ async def test_long_chapters_preview_briefly_until_you_read_them(tmp_path: Path)
     long_text = "\n\n".join(f"Paragraph {n}. " + "word " * 100 for n in range(40)).strip()
     book = make_book(tmp_path / "book", {"A": {"Long": long_text}})
     async with WriApp(book.root).run_test(size=SIZE) as pilot:
-        await settle(pilot)
         view = screen(pilot)
-        assert view.preview.source.endswith("Press **tab** to read the rest here.*")
+        await eventually(pilot, lambda: view.preview.source.endswith("to read the rest here.*"))
         assert len(view.preview.source) < len(long_text)
         await pilot.press("tab", "tab")
-        await settle(pilot)
         assert pilot.app.focused is view.preview_pane
-        assert view.preview.source == long_text
+        await eventually(pilot, lambda: view.preview.source == long_text)
 
 
 async def test_titles_that_look_like_markup_are_shown_as_typed(tmp_path: Path) -> None:
     book = make_book(tmp_path / "book", {"[Draft] Notes": {"The [b]Unknown": "Text."}})
     async with WriApp(book.root).run_test(size=SIZE) as pilot:
-        await settle(pilot)
         view = screen(pilot)
+        await eventually(pilot, lambda: shown_title(view.preview_pane) == "The [b]Unknown")
         assert shown_title(view.chapters_list) == "1 · [Draft] Notes"
-        assert shown_title(view.preview_pane) == "The [b]Unknown"
         await pilot.press("enter", "d")
         await pilot.pause()
         assert isinstance(pilot.app.screen, Confirm)
