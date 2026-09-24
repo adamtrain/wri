@@ -7,6 +7,7 @@
 Sections are folders, chapters are Markdown files, and your own editor does the writing.
 
 [![CI](https://github.com/adamtrain/wri/actions/workflows/ci.yml/badge.svg)](https://github.com/adamtrain/wri/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/adamtrain/wri)](https://github.com/adamtrain/wri/releases)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-3776AB?logo=python&logoColor=white)](https://www.python.org)
 [![License: CC0-1.0](https://img.shields.io/badge/license-CC0--1.0-lightgrey)](LICENSE)
 [![Built with Textual](https://img.shields.io/badge/built%20with-Textual-5a4fcf)](https://textual.textualize.io)
@@ -41,7 +42,8 @@ wri needs [uv](https://docs.astral.sh/uv/), which takes care of Python for you:
 uv tool install git+https://github.com/adamtrain/wri
 ```
 
-Update later with `uv tool upgrade wri`.
+Update later with `uv tool upgrade wri`, or install a particular release by
+adding its tag, e.g. `git+https://github.com/adamtrain/wri@v0.1.0`.
 
 ## Start a book
 
